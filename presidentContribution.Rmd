@@ -9,26 +9,40 @@ TITLE by YOUR_NAME_HERE
 # This prevents the code from displaying in the knitted HTML output.
 # You should set echo=FALSE for all code chunks in your file.
 
-library(ggplot2)
+library("ggplot2")
+library("dplyr")
 ```
 
 ```{r echo=FALSE, Load_the_Data}
 # Load the Data
-cont_df <- read.csv("P00000001-CA.csv", header=TRUE)
-str(cont_df)
+df <- read.csv("P00000001-CA.csv", header=TRUE)
+str(df)
+names(df)
 ```
 
 # Univariate Plots Section
 ```{r echo=FALSE, Univariate_Plots}
-ggplot(aes(x=contb_receipt_amt), data=cont_df) + geom_histogram() +xlim(c(0,100)) + ylim(c(0,5000))
-sort(table(cont_df$contbr_city),decreasing = T)[1:10]
-sort(table(cont_df$contbr_employer),decreasing = T)[1:25]
-sort(table(cont_df$cand_nm),decreasing = T)
-nm <- names(sort(table(cont_df$cand_nm), decreasing = T)[1:5])
-ggplot(data=subset(cont_df, cand_nm %in% nm),aes(x=cand_nm)) + geom_bar() + coord_flip()
-ct <- names(sort(table(cont_df$contbr_city), decreasing = T)[1:5])
-ggplot(data=subset(cont_df, contbr_city %in% ct),aes(x=contbr_city)) + geom_bar() + coord_flip()
+summary(df$contb_receipt_amt)
+ggplot(data=df, aes(x=contb_receipt_amt)) + geom_histogram() + xlim(0,100) 
+df_clean <- subset(df, contb_receipt_amt > quantile(contb_receipt_amt, .25) - 1.5*IQR(contb_receipt_amt) & contb_receipt_amt < quantile(contb_receipt_amt, .75)+1.5*IQR(contb_receipt_amt))
+ggplot(aes(x=factor(0), contb_receipt_amt), data=df_clean) + geom_boxplot()
 
+length(unique(df$cand_nm))
+sort(table(df$cand_nm), decreasing = T)[1:6]
+nm <- names(sort(table(df$cand_nm), decreasing = T)[1:6])
+ggplot(data=subset(df, cand_nm %in% nm), aes(x=cand_nm)) + geom_bar() + coord_flip()
+
+length(unique(df$contbr_city))
+sort(table(df$contbr_city), decreasing = T)[1:6]
+ct <- names(sort(table(df$contbr_city), decreasing = T)[1:6])
+ggplot(data=subset(df, contbr_city %in% ct), aes(x=contbr_city)) + geom_bar() + coord_flip()
+
+df_clean$datef <- as.Date(df_clean$contb_receipt_dt, "%d-%b-%y")
+summary(df_clean$datef)
+ggplot(data=df_clean, aes(x=datef)) + geom_freqpoly() +scale_x_date(limits=c(as.Date("2015-2-1"), max(df_clean$datef)))
+
+occu <- names(sort(table(df_clean$contbr_occupation), decreasing = T)[1:8])
+ggplot(data=subset(df_clean, contbr_occupation %in% occu), aes(x=contbr_occupation)) + geom_bar() + theme(axis.text.x=element_text(angle=90))
 ```
 
 # Univariate Analysis
@@ -47,8 +61,13 @@ ggplot(data=subset(cont_df, contbr_city %in% ct),aes(x=contbr_city)) + geom_bar(
 
 # Bivariate Plots Section
 ```{r echo=FALSE, Bivariate_Plots}
-ggplot(data=subset(cont_df, contbr_city %in% ct),aes(x=contbr_city, y=contb_receipt_amt)) + geom_point()
+ggplot(data=subset(df_clean, contbr_city %in% ct & cand_nm %in% nm), aes(x=cand_nm, y=contb_receipt_amt)) + geom_boxplot() + theme(axis.text.x=element_text(angle=90))
+ggplot(data=subset(df_clean, contbr_city %in% ct & cand_nm %in% nm), aes(x=contbr_city, y=contb_receipt_amt)) + geom_boxplot()
+ggplot(data=subset(df_clean, contbr_city %in% ct & cand_nm %in% nm & contb_receipt_amt > 0), aes(x=cand_nm, y=contb_receipt_amt)) + geom_bar(stat='identity') + theme(axis.text.x=element_text(angle=90))
+ggplot(data=subset(df_clean, contbr_city %in% ct & cand_nm %in% nm & contb_receipt_amt > 0), aes(x=contbr_city, y=contb_receipt_amt)) + geom_bar(stat='identity') + theme(axis.text.x=element_text(angle=90))
 
+ggplot(data=subset(df_clean, cand_nm %in% nm), aes(x=datef)) +geom_freqpoly(aes(color=cand_nm)) + scale_x_date(limits = c(as.Date("2015-2-1"),max(df_clean$datef)))
+ggplot(data=subset(df_clean, contbr_city %in% ct), aes(x=datef)) +geom_freqpoly(aes(color=contbr_city)) + scale_x_date(limits = c(as.Date("2015-2-1"),max(df_clean$datef)))
 ```
 
 # Bivariate Analysis
