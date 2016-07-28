@@ -1,5 +1,7 @@
-TITLE by YOUR_NAME_HERE
-========================================================
+Exploration of contribution for Presidential Election in 2016
+==============================================================
+
+This report explores data of contributions in California state for Presidential election in 2016. 
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, packages}
 # Load all of the packages that you end up using
@@ -16,82 +18,228 @@ library("dplyr")
 ```{r echo=FALSE, Load_the_Data}
 # Load the Data
 df <- read.csv("P00000001-CA.csv", header=TRUE)
+```
+
+SUMMARY OF DATA
+```{r echo=FALSE, Summary_of_Data}
 str(df)
+```
+
+NAME OF COLUMNS IN DATA
+```{r echo=FALSE, Columns_Data}
 names(df)
 ```
 
 # Univariate Plots Section
-```{r echo=FALSE, Univariate_Plots}
+```{r echo=FALSE, warning=FALSE, message=FALSE, Univariate_Plots_contb_receipt_amt}
 summary(df$contb_receipt_amt)
-ggplot(data=df, aes(x=contb_receipt_amt)) + geom_histogram() + xlim(0,100) 
+ggplot(data=df, aes(x=contb_receipt_amt)) + geom_histogram() + xlim(0,100)
 df_clean <- subset(df, contb_receipt_amt > quantile(contb_receipt_amt, .25) - 1.5*IQR(contb_receipt_amt) & contb_receipt_amt < quantile(contb_receipt_amt, .75)+1.5*IQR(contb_receipt_amt))
 ggplot(aes(x=factor(0), contb_receipt_amt), data=df_clean) + geom_boxplot()
+```
 
+Most of contribution entries seem to lie between 0 and 50 with few outliers as shown by quantiles and boxplot.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, Univariate_Plots_cand_nm}
 length(unique(df$cand_nm))
-sort(table(df$cand_nm), decreasing = T)[1:6]
+sort(table(df$cand_nm), decreasing = T)
 nm <- names(sort(table(df$cand_nm), decreasing = T)[1:6])
 ggplot(data=subset(df, cand_nm %in% nm), aes(x=cand_nm)) + geom_bar() + coord_flip()
+```
 
+There are total 24 candidates. Bernard Sanders got most contributions followed by Hillary Clinton.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, Univariate_Plots_contbr_city}
 length(unique(df$contbr_city))
 sort(table(df$contbr_city), decreasing = T)[1:6]
 ct <- names(sort(table(df$contbr_city), decreasing = T)[1:6])
 ggplot(data=subset(df, contbr_city %in% ct), aes(x=contbr_city)) + geom_bar() + coord_flip()
+```
 
+There are 1504 cities. Los Angeles seems to be most contributing city followed closely by San Francisco.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, Univariate_Plots_date}
 df_clean$datef <- as.Date(df_clean$contb_receipt_dt, "%d-%b-%y")
 summary(df_clean$datef)
 ggplot(data=df_clean, aes(x=datef)) + geom_freqpoly() +scale_x_date(limits=c(as.Date("2015-2-1"), max(df_clean$datef)))
+```
 
+We see that minimum contribution date is on 5th November, 2013, while maximum date is on 30th June, 2016. Numbers of contributions is contiuously rising and in 2016 there is steep increase in contributions and reaches its peak in March, 2016.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, Univariate_Plots_occupation}
+sort(table(df_clean$contbr_occupation), decreasing = T)[1:8]
 occu <- names(sort(table(df_clean$contbr_occupation), decreasing = T)[1:8])
 ggplot(data=subset(df_clean, contbr_occupation %in% occu), aes(x=contbr_occupation)) + geom_bar() + theme(axis.text.x=element_text(angle=90))
 ```
+
+Surprisingly most of contributors are unemployed or retired.  It might be due to fact that contributors want to maintain privacy of their occupation.
 
 # Univariate Analysis
 
 ### What is the structure of your dataset?
 
+Contribution amount(contb_receipt_amt) is mostly less than or equal to 50 with most of contributions centered around multipliers of 5.
+Our dataset consists of 19 variables(columns) and 731695 contributions(rows).  
+There are 24 candidates(cand_nm) and 1504 cities(contbr_city).  
+Top 6 candidates who received most number of contributions in decreasing order are  
+
+* Sanders, Bernard
+* Clinton, Hillary Rodham
+* Cruz, Rafael Edward 'Ted'
+* Carson, Benjamin S.
+* Rubio, Marco
+* Trump, Donald J.
+
+Top 6 cities, who gave maximum numbers of contribution in decreasing order are  
+
+* LOS ANGELES
+* SAN FRANCISCO
+* SAN DIEGO
+* OAKLAND
+* SAN JOSE
+* BERKELEY   
+
+We see that above are also highly populated cities of California and this might be reason for high contributions there.  
+
+Top 8 occupations(contbr_occupation) of biggest contributorts are below in decreasing order  
+
+* NOT EMPLOYED
+* RETIRED
+* TEACHER
+* ATTORNEY
+* ENGINEER
+* SOFTWARE ENGINEER
+* PHYSICIAN
+* PROFESSOR
+
+Contributions started from November, 2013 and contribution data is availabe till June, 2016. Date is specified in column contb_receipt_dt.  
+
 ### What is/are the main feature(s) of interest in your dataset?
+Main features of interest in dataset are ammount received (contbr_receipt_amt) and candidate (cand_nm).
 
 ### What other features in the dataset do you think will help support your investigation into your feature(s) of interest?
+Other features like candidate city(contbr_city), date of donation(contb_receipt_date) and contributor occupation (contbr_occupation) support in investigation of candidates who received highest contributions.
 
 ### Did you create any new variables from existing variables in the dataset?
+I didn't create any new variable, but cleaned the data and recorded that we could add features like gender and party (democratic or republican) for deeper exploration of data.
 
 ### Of the features you investigated, were there any unusual distributions? Did you perform any operations on the data to tidy, adjust, or change the form of the data? If so, why did you do this?
+We did following operations to clean the data  
 
-
+* removed outliers from contribution amout (contb_receipt_amt) by removing donations lying outside of 1.5 times interquantile range.
+* Collected lists of top cities, candidates and occupations to explore relations in tractable way as most of contributions are centered there.
+* converted contribution date into a R date type, so that it could be explored in R synatx.
 
 # Bivariate Plots Section
-```{r echo=FALSE, Bivariate_Plots}
+```{r echo=FALSE, warning=FALSE, message=FALSE, Bivariate_Plots_cand_nm_count_amt_box}
 ggplot(data=subset(df_clean, contbr_city %in% ct & cand_nm %in% nm), aes(x=cand_nm, y=contb_receipt_amt)) + geom_boxplot() + theme(axis.text.x=element_text(angle=90))
-ggplot(data=subset(df_clean, contbr_city %in% ct & cand_nm %in% nm), aes(x=contbr_city, y=contb_receipt_amt)) + geom_boxplot()
-ggplot(data=subset(df_clean, contbr_city %in% ct & cand_nm %in% nm & contb_receipt_amt > 0), aes(x=cand_nm, y=contb_receipt_amt)) + geom_bar(stat='identity') + theme(axis.text.x=element_text(angle=90))
-ggplot(data=subset(df_clean, contbr_city %in% ct & cand_nm %in% nm & contb_receipt_amt > 0), aes(x=contbr_city, y=contb_receipt_amt)) + geom_bar(stat='identity') + theme(axis.text.x=element_text(angle=90))
+```
 
+We see that most of contribution amount is between 0 and 100 for all candidates, though we see that data quantile range is expanded for Donald Trump and Marco Rubio.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, Bivariate_Plots_cand_nm_contr_city}
+ggplot(data=subset(df_clean, contbr_city %in% ct & cand_nm %in% nm), aes(x=contbr_city, y=contb_receipt_amt)) + geom_boxplot()
+```
+
+We see that there is no variation in type of contribution received between different cities.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, Bivariate_Plots_cand_nm_contb_receipt_amt}
+ggplot(data=subset(df_clean, contbr_city %in% ct & cand_nm %in% nm & contb_receipt_amt > 0), aes(x=cand_nm, y=contb_receipt_amt)) + geom_bar(stat='identity') + theme(axis.text.x=element_text(angle=90))
+```
+
+We see that Bernard Sanders received highest amount of contribution followed by Hillary Clinton. This corresponds to number of donations in univariate analysis.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, Bivariate_Plots_contbr_city_contb_receipt_amt}
+ggplot(data=subset(df_clean, contbr_city %in% ct & cand_nm %in% nm & contb_receipt_amt > 0), aes(x=contbr_city, y=contb_receipt_amt)) + geom_bar(stat='identity') + theme(axis.text.x=element_text(angle=90))
+```
+
+We see that Los Angeles received highest amount of contribution followed by San Francisco.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, Bivariate_Plots_cand_nm_contbr_city}
+ggplot(data=subset(df_clean, contbr_city %in% ct & cand_nm %in% nm), aes(x=cand_nm, fill = contbr_city)) + geom_bar() + scale_y_log10() + theme(axis.text.x=element_text(angle=90))
+```
+
+We don't see any candidate getting preference in a particular city.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, Bivariate_Plots_datef_cand_nm}
 ggplot(data=subset(df_clean, cand_nm %in% nm), aes(x=datef)) +geom_freqpoly(aes(color=cand_nm)) + scale_x_date(limits = c(as.Date("2015-2-1"),max(df_clean$datef)))
+```
+
+We see same relation of number of contributions for different candidates with time as we found with aggregated data. We see contribution decreasing for different candidates as they become out of race. We see sharp decline in popularity of Donald Trump after March'16. Hillary Clinton seems to overtake all other candidates in end.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, Bivariate_Plots_datef_conbr_city}
 ggplot(data=subset(df_clean, contbr_city %in% ct), aes(x=datef)) +geom_freqpoly(aes(color=contbr_city)) + scale_x_date(limits = c(as.Date("2015-2-1"),max(df_clean$datef)))
 ```
+
+We don't see any anomaly in number of contributions with respect to city and they tend to follow general pattern.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, Bivariate_Plots_contbr_occupation_contb_amt}
+ggplot(data=subset(df_clean, contbr_occupation %in% occu), aes(contbr_occupation, contb_receipt_amt)) + geom_boxplot() + theme(axis.text.x=element_text(angle=90))
+```
+
+Individual contribution amout is low and doesn't vary with occupation except physician who seems to have higher individual contribution amount.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, Bivariate_Plots_contbr_occupation_cand_nm}
+ggplot(data=subset(df_clean, contbr_occupation %in% occu & cand_nm %in% nm), aes(cand_nm, fill=contbr_occupation)) + geom_bar() + theme(axis.text.x=element_text(angle=90))
+```
+
+We see that most of unemployed contributed to Sanders, while Clinton has most contribution from retired.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, Bivariate_Plots_contbr_occupation_contbr_city}
+ggplot(data=subset(df_clean, contbr_occupation %in% occu & contbr_city %in% ct), aes(contbr_city, fill=contbr_occupation)) + geom_bar() + theme(axis.text.x=element_text(angle=90))
+```
+
+In general, there is no variation in occupation type across cities except San Francisco and San Jose tends to have more Software Engineer, which can be attributed to their location in silicon valley.
 
 # Bivariate Analysis
 
 ### Talk about some of the relationships you observed in this part of the investigation. How did the feature(s) of interest vary with other features in the dataset?
+We found following relations  
+
+* Bernard Sanders received highest contribution followed by Hillary Clinton with other lagging much behind.
+* Number of contributions started increasing after middle of 2015 and there was steep increase in number of contributions in 2016 which reached its peak in March, 2016.
+* Los Angeles received highest donation followed by San Francisco, Oakland, San Jose and Berkeley.
+* Physician has more individual contribution amount than other professions.
+* Clinton got most of her contributions from retired, while Sanders got his from Unemployed.
 
 ### Did you observe any interesting relationships between the other features (not the main feature(s) of interest)?
+We found that San Francisco and San Jose has more Software Engineers.
 
 ### What was the strongest relationship you found?
-
-
-
+We found that amount of contribution received depended strongly on candidate and city. It is exptected as more popular the candidate, more dontation he would receive. Bernard Sanders has received most contributions as per our analysis. Also more populous the city, more amount of contribution can be exptected.
 
 # Multivariate Plots Section
 
-```{r echo=FALSE, Multivariate_Plots}
+```{r echo=FALSE, Multivariate_Plots_contbr_city_cand_nm}
+df_clean <- dplyr::arrange(df_clean, contbr_city, cand_nm)
+ggplot(data=subset(df_clean, contbr_city %in% ct & cand_nm %in% nm & contb_receipt_amt > 0), aes(x=cand_nm, y=contb_receipt_amt/1e+06, fill=contbr_city)) + geom_bar(stat='identity') + theme(axis.text.x=element_text(angle=90))
 
+df_clean <- dplyr::arrange(df_clean, contbr_occupation, cand_nm)
+ggplot(data=subset(df_clean, contbr_city %in% ct & cand_nm %in% nm & contbr_occupation %in% occu & contb_receipt_amt > 0), aes(x=cand_nm, y=contb_receipt_amt, fill=contbr_occupation)) + geom_bar(stat='identity') + theme(axis.text.x=element_text(angle=90))
 ```
+
+As expected, Bernard Sanders and Hillary Clinton received most amount of contribution and from Los Angeles/ San Francisco cities. 
+
+```{r echo=FALSE, Multivariate_Plots_cand_nm_contb_receipt_amt}
+ggplot(data=subset(df_clean, contbr_city %in% ct & cand_nm %in% nm & contb_receipt_amt > 0), aes(x=datef, y=contb_receipt_amt)) + geom_point(aes(color=cand_nm))
+```
+
+We see that most of contribution are in multiples of 5 and dominated by Sanders and Clinton.
+
+```{r echo=FALSE, Multivariate_Plots_cand_nm_contbr_city_grp}
+tmp <- subset(df_clean, cand_nm %in% nm) %>% group_by(cand_nm, contbr_city) %>% summarise(n=sum(contb_receipt_amt)) %>% group_by(cand_nm) %>% arrange(desc(n)) %>% slice(1:6)
+ggplot(data=tmp, aes(x=contbr_city,  y=n)) + geom_bar(stat='identity') + facet_wrap(~cand_nm, scales="free") + theme(axis.text.x = element_text(angle = 90))
+```
+
+Here we plotted top 6 contributing cities of each of top 6 candidates. 
 
 # Multivariate Analysis
 
 ### Talk about some of the relationships you observed in this part of the investigation. Were there features that strengthened each other in terms of looking at your feature(s) of interest?
+We found that contribution amounts are multiple of 5. Sanders started his campaign late, while Hillary has been active from earliest. Software engineers  and unemployed seem most supportive of Sanders. 
 
 ### Were there any interesting or surprising interactions between features?
+We found that top cities are different for each candidate. While Cruz received most contributions from San Diego and Bakersfield, while Los Angeles is top contributing city overall.
 
 ### OPTIONAL: Did you create any models with your dataset? Discuss the strengths and limitations of your model.
 
@@ -101,27 +249,49 @@ ggplot(data=subset(df_clean, contbr_city %in% ct), aes(x=datef)) +geom_freqpoly(
 
 ### Plot One
 ```{r echo=FALSE, Plot_One}
-
+ggplot(data=subset(df_clean, contbr_occupation %in% occu & cand_nm %in% nm), aes(cand_nm, fill=contbr_occupation)) + geom_bar() + theme(axis.text.x=element_text(angle=90)) + xlab("candidate name") + ylab("number of contributions") + ggtitle("Number of contributions versus candidate name/occupation")
 ```
 
 ### Description One
-
+Points to note in above plot are
+* Unemployed and retired are maximum contributors.
+* While most retired supports Hillary Clinton, Unemployed supports Bernard Sanders.
+* Most of engineers and software engineers also seem to support Sanders Bernard.
 
 ### Plot Two
 ```{r echo=FALSE, Plot_Two}
-
+ggplot(data=subset(df_clean, contbr_city %in% ct & cand_nm %in% nm), aes(x=cand_nm, fill = contbr_city)) + geom_bar() + scale_y_log10() + theme(axis.text.x=element_text(angle=90)) + xlab("candidadate name") + ylab("log of number of contributions") + ggtitle("log10(number of contributions) versus candidate/city")
 ```
 
 ### Description Two
+We note following points from plot
 
+* Bernard Sanders received maximum number of contributions followed by Hillary Clinton.
+* Donald Trump was at sixth position with meagre contributions.
+* Los Angeles and San Francisco were major contributing cities.
+* Donald Trump doesn't seem to getting any contribution from Berkeley.
 
 ### Plot Three
 ```{r echo=FALSE, Plot_Three}
-
+ggplot(data=subset(df_clean, contbr_city %in% ct & cand_nm %in% nm & contb_receipt_amt > 0), aes(x=datef, y=contb_receipt_amt)) + geom_point(aes(color=cand_nm), alpha = 0.2) + xlab("date") + ylab("contribution amount in dollars") + ggtitle("contribution amount versus date")
 ```
 
 ### Description Three
+Following are points to note in above plot
+
+* Most contributions are in multiples of 5 like 5, 10, 25, 50, 75 and 100.
+* Most contribution are for Hillary Clinton and Bernard Sanders.
+* Hillary Clinton started her campaign early as she has started getting contributions before Bernard Sanders.
+* Later Bernard Sanders dominate the contributions and getting most of contribution since end of 2015.
+* After Sanders becomes out of presidential race around May, 2016,  contributions for him are stopped.
+* Most of individual contributions are between 0 and 50.
 
 ------
 
 # Reflection
+
+Most of contribution were concentrated on few candidates, cities and occupations. To make data easier to explore and tractable, I found top candidate, cities and occupation and used them in analysis.
+
+We were able to find relations between distribution of contributions across candidates with respect to city and occupation of contributor. We also found important changes in contribution with time. OUr finding was surprising as nominated candidates Clinton and Sanders doesn't seem to be most popular in contributions.
+
+In future, we could add other information like candidate party (Democratic/ Republican) and gender. We can also compare the data with other cities. We could also add population of cities to explain difference between cities contributions. We can also define important milestone in Presidential election to explain change in contributions with date. Also by using only top candidates to explore, we might have missed some important finding for other candidates which we can explore.
